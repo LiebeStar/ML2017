@@ -54,12 +54,14 @@ for i in range(1, len(data), 18):
 
 # ydata = b + w * xdata
 
-b = random.uniform(-10000.0, 10000.0)
-w = np.random.rand(1, 9)
+init_b = random.uniform(-1000.0, 1000.0)
+init_w = np.random.rand(1, 9)
 lr = 1.0  #learning rate
 lamda = random.uniform(0.001, 0.01) # for regularization
 iteration = 120000;
 
+b = init_b
+w = init_w
 b_lr = 1.0
 w_lr = 1.0
 
