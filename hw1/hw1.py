@@ -27,7 +27,7 @@ y_data = []
 for i in range(1, len(data), 18):
     # 24 hours split into two set
     tmp = []
-    for j in range(i, i+18):
+    for j in range(i+9, i+10):
         for k in range(3, 12):
             if(data[j][k]=='NR'):
                 data[j][k]=0
@@ -37,7 +37,7 @@ for i in range(1, len(data), 18):
                  
 for i in range(1, len(data), 18):
     tmp = []
-    for j in range(i, i+18):
+    for j in range(i+9, i+10):
         for k in range(17, 26):
             if(data[j][k]=='NR'):
                 data[j][k]=0
@@ -55,10 +55,10 @@ for i in range(1, len(data), 18):
 # ydata = b + w * xdata
 
 b = random.uniform(-10000.0, 10000.0)
-w = np.random.rand(1, 18*9)
+w = np.random.rand(1, 9)
 lr = 1.0  #learning rate
 lamda = random.uniform(0.001, 0.01) # for regularization
-iteration = 100000;
+iteration = 120000;
 
 b_lr = 1.0
 w_lr = 1.0
@@ -68,7 +68,7 @@ w_lr = 1.0
 
 for i in range(iteration):
     b_grad = 0.0
-    w_grad = np.zeros((18 * 9, ), dtype= np.float)
+    w_grad = np.zeros((9, ), dtype= np.float)
     for n in range(len(x_data)):
         b_grad = b_grad - float(2.0*(y_data[n] - (b + np.dot(w, x_data[n]))))
         w_grad = w_grad - float(2.0*(y_data[n] - (b + np.dot(w, x_data[n])))) * x_data[n] + 2.0 * lamda * w 
@@ -96,7 +96,7 @@ f.close()
 test_data = []
 for i in range(0, len(data), 18):
     tmp = []
-    for j in range(i, i+18):
+    for j in range(i+9, i+10):
         for k in range(2, len(data[j])):
             if(data[j][k]=='NR'):
                 data[j][k]=0
