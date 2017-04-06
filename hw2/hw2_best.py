@@ -69,7 +69,7 @@ def train(X_train_normed, Y_train):
             cross_entropy = -(np.dot(Y, np.log(y)) + np.dot((1.0 - Y), np.log(1.0 - y)))
             epoch_loss += cross_entropy
     			
-            w_grad = np.sum(-1 * X * (Y - y).reshape((batch_size,1)), axis=0) + 2.0 * lamda * w
+            w_grad = np.sum(-1 * X * (Y - y).reshape((batch_size,1)), axis=0)
             b_grad = np.sum(-1 * (Y - y))
     
             w = w - l_rate * w_grad

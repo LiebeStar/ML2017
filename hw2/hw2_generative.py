@@ -37,8 +37,8 @@ def sigmoid(z):
 
 
 
-data = fread('X_train')
-y_data = fread('Y_train')
+data = fread(sys.argv[1])
+y_data = fread(sys.argv[2])
 
 x_data = []
 for i in range(len(y_data)):
@@ -76,7 +76,7 @@ w = np.transpose( np.transpose(mean1-mean2) * np.linalg.inv(cm) )
 b = ( -0.5 * np.transpose(mean1) * np.linalg.inv(cm) * mean1 ) + ( 0.5 * np.transpose(mean2) * np.linalg.inv(cm) * mean2 ) + np.log(size1/size2)
 
 
-data = fread('X_test')
+data = fread(sys.argv[3])
 test_X = []
 for i in range(1, len(data)):
     tmp = []
@@ -88,7 +88,7 @@ for i in range(1, len(data)):
 predict = []
 for i in range(0, len(test_X)):
     z = np.matrix(test_X[i])*w + b
-    if(float(sigmoid(z[0][0])) >= 0.55):
+    if(float(sigmoid(z[0][0])) >= 0.5):
         predict.append(0)
     else:
         predict.append(1)
@@ -102,7 +102,7 @@ for i in range(len(predict)):
     answer.append(tmp)
     
     
-f = open('test_Y.csv','w')
+f = open(sys.argv[4],'w')
 w = csv.writer(f)
 w.writerows(answer)
 f.close()
