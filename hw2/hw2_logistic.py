@@ -1,155 +1,112 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  9 11:35:15 2017
-
-@author: liebe
-"""
-
-import random
-import csv
-import copy
 import sys
 import numpy as np
+from math import log, floor
 
-data = []
+def sigmoid(z):
+    res = 1 / (1.0 + np.exp(-z))
+    return np.clip(res, 0.00000000000001, 0.99999999999999)
 
-f = open( sys.argv[1], 'r', encoding='big5')
-for row in csv.reader(f):
-    data.append(row)
-f.close()
+def load_data():
+    X_train = np.delete(np.genfromtxt('X_train.csv', delimiter=','), 0, 0)
+    Y_train = np.genfromtxt('Y_train.csv', delimiter=',')
+    X_test = np.delete(np.genfromtxt('X_test.csv', delimiter=','), 0, 0)
+    return X_train, Y_train, X_test
+
+def feature_normalize(X_train, X_test):
+    # feature normalization with all X
+    X_all = np.concatenate((X_train, X_test))
+    mu = np.mean(X_all, axis=0)
+    sigma = np.std(X_all, axis=0)
+	
+    # only apply normalization on continuos attribute
+    index = [0, 1, 3, 4, 5, 107]
+    mean_vec = np.zeros(X_all.shape[1])
+    std_vec = np.ones(X_all.shape[1])
+    mean_vec[index] = mu[index]
+    std_vec[index] = sigma[index]
+
+    X_all_normed = (X_all - mean_vec) / std_vec
+
+    # split train, test again
+    X_train_normed = X_all_normed[0:X_train.shape[0]]
+    X_test_normed = X_all_normed[X_train.shape[0]:]
+
+    return X_train_normed, X_test_normed
+
+def shuffle(X, Y):
+    randomize = np.arange(len(X))
+    np.random.shuffle(randomize)
+    return (X[randomize], Y[randomize])
+
+def train(X_train_normed, Y_train):
+    # parameter initiallize
+    w = np.zeros((108,))
+    b = np.zeros((1,))
+    l_rate = 0.03
+    epoch_num = 10000
+    batch_size = 256
+    train_data_size = X_train_normed.shape[0]
+    batch_num = int(floor(train_data_size / batch_size))
+    display_num = 20
+    # train with batch
+    for epoch in range(epoch_num):
+        # random shuffle
+        X_train_normed, Y_train = shuffle(X_train_normed, Y_train)
+        epoch_loss = 0.0
+        for idx in range(batch_num):
+            X = X_train_normed[idx*batch_size:(idx+1)*batch_size]
+            Y = Y_train[idx*batch_size:(idx+1)*batch_size]
+			
+            z = np.dot(X, np.transpose(w)) + b
+            y = sigmoid(z)
+			
+            w_grad = np.sum(-1 * X * (Y - y).reshape((batch_size,1)), axis=0)
+            b_grad = np.sum(-1 * (Y - y))
+
+            w = w - l_rate * w_grad
+            b = b - l_rate * b_grad
+
+        if (epoch+1) % display_num == 0:
+            print ('avg_loss in epoch%d' % (epoch+1))  
+    return w, b
+
+def predict(w, b, X_test_normed):
+    # output prediction to 'prediction.csv'
+    z = (np.dot(X_test_normed, np.transpose(w)) + b)
+    y = sigmoid(z)
+    y_ = np.around(y)
+    with open('prediction.csv', 'w') as f:
+        f.write('id,label\n')
+        for i, v in  enumerate(y_):
+            f.write('%d,%d\n' %(i+1, v))
+    return
 
 
-x_data = []
-y_data = []
-# 18 different data in one day 
-for i in range(1, len(data), 18):
-    # 24 hours split into two set
+X_train, Y_train, X_test = load_data()
+
+X_train_process = []
+for i in range(len(X_train)):
     tmp = []
-    for j in range(i+9, i+10):
-        for k in range(3, 12):
-            if(data[j][k]=='NR'):
-                data[j][k]=0
-            tmp.append(float(data[j][k]))
-    x_data.append(tmp)
-    x_data[len(x_data)-1] = np.array(x_data[len(x_data)-1])
-
-for i in range(1, len(data), 18):
+    for j in range(len(X_train[i])):
+        tmp.append(X_train[i][j])
+    tmp.append( X_train[i][52]+X_train[i][2] )
+    tmp.append( X_train[i][52]+X_train[i][5] )
+    X_train_process.append(tmp)
+X_train_process = np.array(X_train_process)
+        
+X_test_process = []
+for i in range(len(X_test)):
     tmp = []
-    for j in range(i+9, i+10):
-        for k in range(17, 26):
-            if(data[j][k]=='NR'):
-                data[j][k]=0
-            tmp.append(float(data[j][k]))
-    x_data.append(tmp)
-    x_data[len(x_data)-1] = np.array(x_data[len(x_data)-1])
-    
-for i in range(1, len(data), 18):
-    y_data.append(float(data[i+9][12]))
+    for j in range(len(X_test[i])):
+        tmp.append(X_test[i][j])
+    tmp.append( X_test[i][52]+X_test[i][2] )
+    tmp.append( X_test[i][52]+X_test[i][5] )
+    X_test_process.append(tmp)
+X_test_process = np.array(X_test_process)
 
-for i in range(1, len(data), 18):
-    y_data.append(float(data[i+9][26]))
+X_train_normed, X_test_normed = feature_normalize(X_train_process, X_test_process)
 
-# ydata = b + w * xdata
-
-#init_b = random.uniform(-1000.0, 1000.0)
-#init_w = np.random.rand(1, 9)
-#lamda = random.uniform(0.001, 0.01) # for regularization
-
-lr = 1.0  #learning rate
-
-init_b = 143.9310038399983
-init_w = np.array( [
-7.958930141278124371e-01,
-3.416067742381843075e-01,
-6.186365119737545770e-01,
-5.372440512447886896e-01,
-3.346187037680361520e-01,
-2.418090409083799575e-01,
-4.397033172869396767e-01,
-4.662250012569726376e-01,
-5.030662612860843375e-01 ] ) 
-lamda = 0.008570385672974277                 
-iteration = 100000;
-
-b = copy.copy(init_b)
-w = copy.copy(init_w)
-b_lr = 1.0
-w_lr = 1.0
-now = 1
-
-for i in range(iteration):
-    b_grad = 0.0
-    w_grad = np.zeros((9, ), dtype= np.float)
-    for n in range(len(x_data)):
-        b_grad = b_grad - float(2.0*(y_data[n] - (b + np.dot(w, x_data[n]))))
-        w_grad = w_grad - float(2.0*(y_data[n] - (b + np.dot(w, x_data[n])))) * x_data[n] + 2.0*lamda*w        
-    
-    b_lr = b_lr + b_grad**2
-    w_lr = w_lr + w_grad**2
-    
-    b = b - lr/np.sqrt(b_lr) * b_grad
-    w = w - lr/np.sqrt(w_lr) * w_grad  
-    
-    if((i+1)*100/iteration >= now):
-        print(str(now) + '%')
-        now = now + 1
-                      
-###############  Testing Data  ##############
-
-data = []
-f = open(sys.argv[2], 'r', encoding='big5')
-for row in csv.reader(f):
-    data.append(row)
-f.close()
-
-test_data = []
-for i in range(0, len(data), 18):
-    tmp = []
-    for j in range(i+9, i+10):
-        for k in range(2, len(data[j])):
-            if(data[j][k]=='NR'):
-                data[j][k]=0
-            tmp.append(float(data[j][k]))
-    test_data.append(tmp);
-    test_data[len(test_data)-1] = np.array(test_data[len(test_data)-1])
+w, b = train(X_train_normed, Y_train)
+predict(w, b, X_test_normed)
 
 
-##############  Running Model  ##############
-predict = []
-for i in range(len(test_data)):
-    pm =  round( float( b + np.dot(w, test_data[i])) - 0.5)
-    if pm > 0:
-        predict.append(pm)
-    else:
-        predict.append(0)
-
-answer = [['id', 'value']]
-for i in range(len(predict)):
-    ID = 'id_' + str(i)
-    tmp = [ID, predict[i]]
-    answer.append(tmp)
-    
-    
-f = open(sys.argv[3],"w")
-w = csv.writer(f)
-w.writerows(answer)
-f.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
