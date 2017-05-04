@@ -51,7 +51,6 @@ def FormatData(trainX):
     return trainX, input_shape
 
 
-
 trainX, trainY = LoadTrainData(sys.argv[0])
 trainX, input_shape = FormatData(trainX)
 
