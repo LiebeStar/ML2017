@@ -60,7 +60,7 @@ def WriteResult(result, file_name):
 if __name__ == "__main__":
 
     # data pre-processing
-    testX = LoadTestData(sys.argv[0])
+    testX = LoadTestData(sys.argv[1])
     testX, input_shape = FormatData(testX)
     x_test = testX    
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
 # %% write file
     result = model.predict_classes(x_test, 128)
-    WriteResult(result, sys.argv[1])
+    WriteResult(result, sys.argv[2])
 
 
 
